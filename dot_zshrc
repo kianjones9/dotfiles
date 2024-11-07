@@ -1,0 +1,180 @@
+# Styling
+
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time oh-my-zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+
+# Global settings
+
+alias cksalt="ssh salt-master-00.sfo.covariant.internal.cov.xyz cat /srv/salt/salt.lock 2>/dev/null || echo 'salt unlocked'"
+alias cds="cd ~/lab42_vr/salt"
+alias cdtf="cd ~/lab42_vr/terraform"
+alias cdtools="cd ~/lab42_vr/scripts/pe_tools"
+
+export COV_STEP=true
+export HISTTIMEFORMAT="%d/%m/%y %T"
+
+
+# add alias for tf if terraform exists
+if which terraform > /dev/null; then
+	alias tf="TFENV_ARCH=amd64 terraform"
+	alias tfenv="TFENV_ARCH=amd64 tfenv"
+fi
+
+# add alias for vi and vim if nvim exists
+if which nvim > /dev/null; then
+    alias vi="nvim"
+    alias vim="nvim"
+fi
+
+function sshfix() {
+    local line_number="$1"
+    if [ -n "$line_number" ]; then
+        sed -i.bak "${line_number}d" ~/.ssh/known_hosts
+        echo "Removed offending key at line $line_number from known_hosts file."
+    else
+        echo "Please provide a line number."
+    fi
+}
+
+
+# Host specific settings
+if [ "$HOST" = Kians-MacBook-Pro.local ]; then
+	ZSH_THEME="sonicradish"
+
+	export ZSH="$HOME/.oh-my-zsh"
+	source $ZSH/oh-my-zsh.sh
+
+	alias console="screen /dev/cu.usbserial-A9Z4EISK 9600"
+	alias pepconsole="screen /dev/cu.usbserial-A9Z4EISK 115200"
+	alias inbandconfig="sudo ifconfig en7 192.168.1.111/24"
+	alias vlan99="sudo ifconfig vlan99 create && sudo ifconfig vlan99 vlan 99 vlandev en7 && sudo ifconfig vlan99 inet 192.168.99.111 netmask 255.255.255.0"
+
+	export GOPATH=$HOME/go
+	export GOROOT="$(brew --prefix golang)/libexec"
+	export PATH="$PATH:${GOPATH}/bin:${GOROOT}/bin"
+	
+	function update_bpv() {
+		aws s3 cp s3://bigproxy-versions/current current && vim current && aws s3 cp current s3://bigproxy-versions/current && aws s3api put-object-acl --acl public-read --bucket bigproxy-versions --key current && rm current
+	}
+
+	# Path to your oh-my-zsh installation.
+	if [ -d "/opt/homebrew/opt/ruby/bin" ]; then
+  		export PATH=/opt/homebrew/opt/ruby/bin:$PATH
+  		export PATH=`gem environment gemdir`/bin:$PATH
+	fi
+	export PATH="$PATH:/Users/kjones/Library/Python/3.8/bin"
+	unset `env |grep AWS_|tr "=" " "|awk '{print $1}'`
+        eval "$(zellij setup --generate-auto-start zsh)"
+	echo "Local Macbook settings applied"
+
+elif ! command -v salt-minion >/dev/null 2>&1; then
+
+	# alias for puppet testing
+	function puptest() {
+		server=${1:-devvm-kjones-000.dev.us-east-1.aws}
+		sudo bash -c "puppet agent --enable; puppet agent --test --server ${server}; puppet resource service puppet ensure=stopped"
+	}
+	alias pupstop='sudo killall puppet && sudo rm -f /opt/puppetlabs/puppet/cache/state/agent_catalog_run.lock && sudo puppet resource service puppet ensure=stopped'
+	alias pupstart='sudo puppet resource service puppet ensure=running'
+	alias puplast='echo $(( $(date +%s) - $(cat /opt/puppetlabs/puppet/public/last_run_summary.yaml | grep last_run | xargs | sed -e "s/^\S*//") ))'
+	alias pupcheck='echo $(( $(date +%s) - $(sudo stat -c %Z /opt/puppetlabs/puppet/cache/state/agent_catalog_run.lock) ))'
+	
+	echo "Puppet settings applied"
+
+else
+	# makes small modifications to prompt, etc. since I don't want to install/attempt to install oh-my-zsh
+	# on all salt-managed machines i.e. onsite LOL 
+	autoload -Uz vcs_info
+	precmd() { vcs_info }
+	zstyle ':vcs_info:git:*' formats '%b '
+	setopt PROMPT_SUBST
+	PROMPT='%F{green}%*%f %F{blue}%~%f %F{red}${vcs_info_msg_0_}%f$ '                                                                      
+	echo "Salt settings applied"
+
+fi
+
+
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+
+plugins=(
+	git
+	zsh-syntax-highlighting
+	zsh-autosuggestions
+)
+
+# If you come from bash you might have to change your $PATH.
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
+
+# Set list of themes to pick from when loading at random
+# Setting this variable when ZSH_THEME=random will cause zsh to load
+# a theme from this variable instead of looking in $ZSH/themes/
+# If set to an empty array, this variable will have no effect.
+# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+
+# Uncomment the following line to use case-sensitive completion.
+# CASE_SENSITIVE="true"
+
+# Uncomment the following line to use hyphen-insensitive completion.
+# Case-sensitive completion must be off. _ and - will be interchangeable.
+# HYPHEN_INSENSITIVE="true"
+
+# Uncomment one of the following lines to change the auto-update behavior
+# zstyle ':omz:update' mode disabled  # disable automatic updates
+# zstyle ':omz:update' mode auto      # update automatically without asking
+# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+
+# Uncomment the following line to change how often to auto-update (in days).
+# zstyle ':omz:update' frequency 13
+
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+# Uncomment the following line to disable colors in ls.
+# DISABLE_LS_COLORS="true"
+
+# Uncomment the following line to disable auto-setting terminal title.
+# DISABLE_AUTO_TITLE="true"
+
+# Uncomment the following line to enable command auto-correction.
+# ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+# You can also set it to another string to have that shown instead of the default red dots.
+# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
+# COMPLETION_WAITING_DOTS="true"
+
+# Uncomment the following line if you want to disable marking untracked files
+# under VCS as dirty. This makes repository status check for large repositories
+# much, much faster.
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+# HIST_STAMPS="mm/dd/yyyy"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Compilation flags
+# export ARCHFLAGS="-arch x86_64"
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
