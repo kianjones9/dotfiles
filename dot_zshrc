@@ -40,7 +40,6 @@ function sshfix() {
 
 
 # Host specific settings
-if [ "$HOST" = Kians-MacBook-Pro.local ]; then
 	ZSH_THEME="sonicradish"
 
 	export ZSH="$HOME/.oh-my-zsh"
@@ -67,9 +66,6 @@ if [ "$HOST" = Kians-MacBook-Pro.local ]; then
 	export PATH="$PATH:/Users/kjones/Library/Python/3.8/bin"
 	unset `env |grep AWS_|tr "=" " "|awk '{print $1}'`
         eval "$(zellij setup --generate-auto-start zsh)"
-	echo "Local Macbook settings applied"
-
-elif ! command -v salt-minion >/dev/null 2>&1; then
 
 	# alias for puppet testing
 	function puptest() {
@@ -80,21 +76,6 @@ elif ! command -v salt-minion >/dev/null 2>&1; then
 	alias pupstart='sudo puppet resource service puppet ensure=running'
 	alias puplast='echo $(( $(date +%s) - $(cat /opt/puppetlabs/puppet/public/last_run_summary.yaml | grep last_run | xargs | sed -e "s/^\S*//") ))'
 	alias pupcheck='echo $(( $(date +%s) - $(sudo stat -c %Z /opt/puppetlabs/puppet/cache/state/agent_catalog_run.lock) ))'
-	
-	echo "Puppet settings applied"
-
-else
-	# makes small modifications to prompt, etc. since I don't want to install/attempt to install oh-my-zsh
-	# on all salt-managed machines i.e. onsite LOL 
-	autoload -Uz vcs_info
-	precmd() { vcs_info }
-	zstyle ':vcs_info:git:*' formats '%b '
-	setopt PROMPT_SUBST
-	PROMPT='%F{green}%*%f %F{blue}%~%f %F{red}${vcs_info_msg_0_}%f$ '                                                                      
-	echo "Salt settings applied"
-
-fi
-
 
 
 # Which plugins would you like to load?
@@ -178,3 +159,8 @@ plugins=(
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+export PATH="/Users/kjones/.savvy/bin:$PATH"
+eval "$(savvy init zsh)"
+export PATH="/Users/kjones/.savvy/bin:$PATH"
+eval "$(savvy init zsh)"
+eval "$(savvy init zsh)"
