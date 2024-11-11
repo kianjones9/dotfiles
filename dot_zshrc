@@ -161,6 +161,3 @@ plugins=(
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 export PATH="/Users/kjones/.savvy/bin:$PATH"
 eval "$(savvy init zsh)"
-export PATH="/Users/kjones/.savvy/bin:$PATH"
-eval "$(savvy init zsh)"
-eval "$(savvy init zsh)"
